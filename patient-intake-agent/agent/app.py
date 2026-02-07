@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import requests
+import os
 
 from dotenv import load_dotenv
 from livekit.agents import JobContext, WorkerOptions, cli

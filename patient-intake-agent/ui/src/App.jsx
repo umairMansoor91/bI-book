@@ -205,6 +205,25 @@ export default function App() {
               />
             </label>
             <button className="primary full" type="button" onClick={handleSave}>
+              <input type="text" placeholder="Jordan Lee" />
+            </label>
+            <label>
+              Date of birth
+              <input type="date" />
+            </label>
+            <label>
+              Chief complaint
+              <input type="text" placeholder="Cough, fatigue" />
+            </label>
+            <label>
+              Symptom duration
+              <input type="text" placeholder="2 weeks" />
+            </label>
+            <label className="full">
+              Notes for clinician
+              <textarea rows="4" placeholder="Additional context for clinician..." />
+            </label>
+            <button className="primary full" type="button">
               Save intake summary
             </button>
           </form>
