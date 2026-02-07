@@ -25,3 +25,21 @@ python app.py
 - `LIVEKIT_API_SECRET`
 - `OPENAI_API_KEY`
 - `DEEPGRAM_API_KEY` (optional)
+- `EHR_API_URL` (optional, enables intake handoff to EHR)
+- `EHR_API_TOKEN` (optional, bearer token for EHR API)
+- `EHR_PAYLOAD_FORMAT` (optional, `fhir` or `raw`, defaults to `fhir`)
+- `INTAKE_STORAGE_PATH` (optional, defaults to `./intake_submissions.json`)
+- `INTAKE_QUEUE_PATH` (optional, defaults to `./intake_queue.jsonl`)
+
+## Intake payloads
+
+Send patient-provided fields over the LiveKit data channel as:
+
+```json
+{ "type": "intake.update", "fields": { "name": "Jordan Lee", "dob": "1991-03-14" } }
+```
+
+The agent stores these fields locally and forwards them to the EHR endpoint if configured.
+Set `EHR_PAYLOAD_FORMAT=raw` to send the raw intake submission payload or leave the default
+`fhir` to emit a basic FHIR Bundle.
+Failed EHR deliveries are queued in `INTAKE_QUEUE_PATH` and retried periodically.

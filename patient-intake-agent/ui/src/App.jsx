@@ -1,3 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
+import { Room } from "livekit-client";
+
 const intakeChecklist = [
   "Name and date of birth",
   "Chief complaint and symptom duration",
@@ -24,6 +27,90 @@ const sampleTimeline = [
 ];
 
 export default function App() {
+  const livekitUrl = import.meta.env.VITE_LIVEKIT_URL;
+  const staticToken = import.meta.env.VITE_LIVEKIT_TOKEN;
+  const tokenServer = import.meta.env.VITE_TOKEN_SERVER;
+  const identity = useMemo(
+    () => `intake-ui-${Math.random().toString(36).slice(2, 8)}`,
+    []
+  );
+  const [status, setStatus] = useState("idle");
+  const [room, setRoom] = useState(null);
+  const [formState, setFormState] = useState({
+    name: "",
+    dob: "",
+    complaint: "",
+    duration: "",
+    notes: ""
+  });
+
+  useEffect(() => {
+    if (!livekitUrl) {
+      setStatus("missing LiveKit URL");
+      return;
+    }
+    let active = true;
+    const lkRoom = new Room();
+
+    const connect = async () => {
+      setStatus("connecting");
+      let token = staticToken;
+      if (!token && tokenServer) {
+        const response = await fetch(
+          `${tokenServer}/token?identity=${encodeURIComponent(identity)}`
+        );
+        const data = await response.json();
+        token = data.token;
+      }
+      if (!token) {
+        setStatus("missing token");
+        return;
+      }
+      await lkRoom.connect(livekitUrl, token);
+      if (!active) {
+        lkRoom.disconnect();
+        return;
+      }
+      setRoom(lkRoom);
+      setStatus("connected");
+    };
+
+    connect().catch((error) => {
+      console.error(error);
+      setStatus("connection failed");
+    });
+
+    return () => {
+      active = false;
+      lkRoom.disconnect();
+    };
+  }, [identity, livekitUrl, staticToken, tokenServer]);
+
+  const updateField = (field) => (event) => {
+    setFormState((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleSave = async () => {
+    if (!room) {
+      setStatus("not connected");
+      return;
+    }
+    const payload = {
+      type: "intake.update",
+      fields: {
+        name: formState.name,
+        dob: formState.dob,
+        chief_complaint: formState.complaint,
+        symptom_duration: formState.duration,
+        notes: formState.notes
+      }
+    };
+    await room.localParticipant.publishData(JSON.stringify(payload), {
+      reliable: true
+    });
+    setStatus("sent update");
+  };
+
   return (
     <div className="app">
       <header className="hero">
@@ -38,6 +125,7 @@ export default function App() {
             <button className="primary">Start intake</button>
             <button className="secondary">View sample summary</button>
           </div>
+          <p className="status">LiveKit status: {status}</p>
         </div>
         <div className="summary-card">
           <h2>Today&apos;s Intake</h2>
@@ -78,6 +166,45 @@ export default function App() {
           <form className="intake-form">
             <label>
               Full name
+              <input
+                type="text"
+                placeholder="Jordan Lee"
+                value={formState.name}
+                onChange={updateField("name")}
+              />
+            </label>
+            <label>
+              Date of birth
+              <input type="date" value={formState.dob} onChange={updateField("dob")} />
+            </label>
+            <label>
+              Chief complaint
+              <input
+                type="text"
+                placeholder="Cough, fatigue"
+                value={formState.complaint}
+                onChange={updateField("complaint")}
+              />
+            </label>
+            <label>
+              Symptom duration
+              <input
+                type="text"
+                placeholder="2 weeks"
+                value={formState.duration}
+                onChange={updateField("duration")}
+              />
+            </label>
+            <label className="full">
+              Notes for clinician
+              <textarea
+                rows="4"
+                placeholder="Additional context for clinician..."
+                value={formState.notes}
+                onChange={updateField("notes")}
+              />
+            </label>
+            <button className="primary full" type="button" onClick={handleSave}>
               <input type="text" placeholder="Jordan Lee" />
             </label>
             <label>

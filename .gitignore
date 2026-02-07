@@ -10,5 +10,9 @@ dist/
 # Env
 .env
 
+# Demo storage
+intake_submissions.json
+intake_queue.jsonl
+
 # OS
 .DS_Store

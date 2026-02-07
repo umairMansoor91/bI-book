@@ -54,6 +54,12 @@ h1 {
   flex-wrap: wrap;
 }
 
+.status {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #5b6a79;
+}
+
 .primary,
 .secondary {
   border-radius: 999px;
